@@ -2,6 +2,13 @@
 
 This repository compiles unique General Awareness (GA) topics scraped from official and educational sites for SSC CGL, SBI PO (Prelims & Mains), other banking exams (IBPS PO, RBI Assistant, IBPS Clerk), and Delhi govt exams (DSSSB TGT/PGT/PRT). Focus: Indian govt exams only.
 
+## Live GA Preparation Planner
+Start planning your SSC CGL / Banking / DSSSB General Awareness preparation now!
+
+👉 **Go to the Planner**: [https://dark0baby.github.io/ssc-gk/website/](https://dark0baby.github.io/ssc-gk/website/)
+
+Enter how many months you have until your exam and get your daily topic schedule instantly.
+
 ## Structure
 - /topics/ssc_cgl_ga.md: SSC CGL GA topics.
 - /topics/sbi_po_ga.md: SBI PO GA topics.
