@@ -182,3 +182,122 @@ function generatePlan() {
 }
 
 // Rest of your code (startToday, showDailyView, startQuiz, submitQuiz, callGrokAPI, etc.) remains unchanged
+// ───── START TODAY ─────
+async function startToday() {
+  const today = new Date().toISOString().split('T')[0];
+  saveUserData('startDate', today);
+  alert("Preparation started today! Open daily after 6 AM IST.");
+  showDailyView();
+}
+
+// ───── DAILY VIEW (dynamic API) ─────
+async function showDailyView() {
+  document.getElementById('plan-screen').style.display = 'none';
+  document.getElementById('daily-view').style.display = 'block';
+
+  const startDateStr = await loadUserData('startDate');
+  if (!startDateStr) return alert("Click 'Start Today' first.");
+
+  const startDate = new Date(startDateStr);
+  const now = new Date();
+  const currentDay = Math.floor((now - startDate) / 86400000) + 1;
+
+  // Dynamic full chapter from API
+  const prompt = `For SSC CGL GA Day ${currentDay}, generate today's full detailed study chapter. Title + complete content (800-1500 words) from Lucent GK/NCERT. Include all facts, examples, PYQ trends. JSON: {title: "...", content: "..."}`;
+
+  const jsonStr = await callGrokAPI(prompt);
+  const todayTask = JSON.parse(jsonStr);
+
+  document.getElementById('current-day').innerText = currentDay;
+  document.getElementById('today-topic').innerHTML = `<strong>Day ${currentDay}:</strong> ${todayTask.title}`;
+  document.getElementById('today-content').innerHTML = todayTask.content.replace(/\n/g, '<br>');
+
+  saveUserData(`day_${currentDay}`, todayTask);
+}
+
+// ───── QUIZ ─────
+async function startQuiz() {
+  document.getElementById('daily-view').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+
+  const currentDay = document.getElementById('current-day').innerText;
+  const todayTask = await loadUserData(`day_${currentDay}`);
+  const topic = todayTask.title;
+
+  const prompt = `Generate 20 SSC CGL GA questions on "${topic}". 4 options, correct answer, explanation, difficulty. JSON array: [{q, options, a, explanation, difficulty, attempts:0, correct:0}]`;
+
+  const jsonStr = await callGrokAPI(prompt);
+  let questions = JSON.parse(jsonStr);
+  questions.forEach(q => { q.attempts = 0; q.correct = 0; });
+
+  let html = '';
+  questions.forEach((q, i) => {
+    html += `<p><strong>Q${i+1} (${q.difficulty}):</strong> ${q.q}</p>`;
+    q.options.forEach(opt => html += `<label><input type="radio" name="q${i}" value="${opt}">${opt}</label><br>`);
+  });
+  document.getElementById('quiz-questions').innerHTML = html;
+
+  window.currentQuiz = questions;
+}
+
+async function submitQuiz() {
+  let score = 0;
+  window.currentQuiz.forEach((q, i) => {
+    const selected = document.querySelector(`input[name="q${i}"]:checked`)?.value;
+    q.attempts = (q.attempts || 0) + 1;
+    if (selected === q.a) {
+      q.correct = (q.correct || 0) + 1;
+      score++;
+    }
+  });
+
+  document.getElementById('quiz-score').innerHTML = `Score: ${score} / ${window.currentQuiz.length}`;
+
+  const today = new Date().toISOString().split('T')[0];
+  const scores = await loadUserData('quizScores') || {};
+  scores[today] = score;
+  saveUserData('quizScores', scores);
+
+  alert("Quiz done! Progress saved. See you tomorrow.");
+  finishDay();
+}
+
+function finishDay() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('daily-view').style.display = 'block';
+}
+
+// ───── API CALL ─────
+async function callGrokAPI(prompt) {
+  try {
+    const response = await fetch(GROK_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: prompt }],
+        model: "grok-4-latest",
+        temperature: 0.7,
+        stream: false
+      })
+    });
+    if (!response.ok) throw new Error(`Proxy error: ${response.status}`);
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (e) {
+    console.error("API failed:", e);
+    return "Error generating content.";
+  }
+}
+
+// ───── LOAD ON PAGE ─────
+window.onload = async () => {
+  const startDate = await loadUserData('startDate');
+  if (startDate) {
+    const now = new Date();
+    if (now.getHours() >= 6) {
+      showDailyView();
+    } else {
+      alert("New day starts at 6 AM IST. Come back then.");
+    }
+  }
+};
