@@ -43,7 +43,7 @@
       <button onclick="resetPlan()">Change Months / Reset</button>
     </div>
   </div>
-<!-- Firebase SDK -->
+<!-- Firebase SDK - Updated to expose all needed functions globally -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import {
@@ -75,10 +75,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // ────────────────────────────────────────────────
-  // Critical: expose ALL needed functions & objects globally
-  // so plain <script src="script.js"> can use them
-  // ────────────────────────────────────────────────
+  // Expose EVERYTHING your script.js calls directly
   window.auth                          = auth;
   window.db                             = db;
   window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
