@@ -10,7 +10,6 @@
   <div class="container">
     <h1>GA Preparation Planner</h1>
 
-    <!-- Auth screen -->
     <div id="auth-screen">
       <h2>Login or Sign Up</h2>
       <p>Save your preparation plan across devices</p>
@@ -24,13 +23,11 @@
       <p id="auth-message" style="color: red; min-height: 24px;"></p>
     </div>
 
-    <!-- User info -->
-    <div id="user-info" style="display:none; margin: 20px 0; text-align:center;">
-      <p>Logged in as: <strong id="current-user"></strong></p>
-      <button onclick="logout()" style="background:#c0392b; color:white;">Log Out</button>
+    <div id="user-info" style="display:none; margin: 20px 0;">
+      <p>Logged in as: <span id="current-user"></span></p>
+      <button onclick="logout()" style="background:#c0392b;">Log Out</button>
     </div>
 
-    <!-- Input for months - hidden initially -->
     <div id="input-screen" style="display: none;">
       <h2>How many months until your exam?</h2>
       <p>Enter a number like 1, 3, 5, 6, 12, 15 etc.</p>
@@ -38,57 +35,64 @@
       <button onclick="generatePlan()">Generate My Plan</button>
     </div>
 
-    <!-- Generated plan -->
     <div id="plan-screen" style="display: none;">
       <h2>Your Custom Plan</h2>
       <p id="summary"></p>
       <div id="daily-plan"></div>
+      <button onclick="startToday()">Start Today</button>
       <button onclick="resetPlan()">Change Months / Reset</button>
+    </div>
+
+    <div id="daily-view" style="display: none;">
+      <h2>Today's Preparation (Day <span id="current-day"></span>)</h2>
+      <p id="today-topic"></p>
+      <div id="today-content"></div>
+      <button onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <div id="quiz-screen" style="display: none;">
+      <h2>Adaptive Quiz for Today's Topic</h2>
+      <div id="quiz-questions"></div>
+      <button onclick="submitQuiz()">Submit Quiz</button>
+      <p id="quiz-score"></p>
+      <button onclick="repeatWrongQuestions()" style="display:none;">Repeat Wrong Questions</button>
+      <button onclick="finishDay()">Finish Day</button>
     </div>
   </div>
 
+  <!-- Firebase SDK -->
   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import {
-    getAuth,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+      onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc
-  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQmKUc29kiogHRB1juJSdoW28499leCdQ",
+      authDomain: "ssc-gk-planner.firebaseapp.com",
+      projectId: "ssc-gk-planner",
+      storageBucket: "ssc-gk-planner.firebasestorage.app",
+      messagingSenderId: "72980353870",
+      appId: "1:72980353870:web:cf729a3d4ae50e1c26841f",
+      measurementId: "G-RBFMSPE5X1"
+    };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQmKUc29kiogHRB1juJSdoW28499leCdQ",
-    authDomain: "ssc-gk-planner.firebaseapp.com",
-    projectId: "ssc-gk-planner",
-    storageBucket: "ssc-gk-planner.firebasestorage.app",
-    messagingSenderId: "72980353870",
-    appId: "1:72980353870:web:cf729a3d4ae50e1c26841f",
-    measurementId: "G-RBFMSPE5X1"
-  };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  // Must expose EVERY function and object you use in script.js
-  window.auth                          = auth;
-  window.db                             = db;
-  window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-  window.signInWithEmailAndPassword     = signInWithEmailAndPassword;
-  window.onAuthStateChanged             = onAuthStateChanged;
-  window.signOut                        = signOut;
-  window.doc                            = doc;
-  window.setDoc                         = setDoc;
-  window.getDoc                         = getDoc;
-</script>
+    window.auth = auth;
+    window.db = db;
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.signOut = signOut;
+    window.doc = doc;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
+  </script>
 
   <script src="script.js"></script>
 </body>
