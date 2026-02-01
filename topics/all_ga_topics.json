@@ -1,0 +1,151 @@
+{
+  "ssc_cgl_ga": {
+    "title": "SSC CGL General Awareness Topics (2025–2026)",
+    "sources": "SSC official notification, Testbook, Adda247, Career Power, Shiksha, Physics Wallah, Oliveboard, etc. Covers Tier 1 & Tier 2 GA.",
+    "categories": [
+      {
+        "category": "Current Affairs",
+        "topics": "National/International Events (last 6–12 months), People in News, Awards/Honors, Sports, Books & Authors, Important Schemes, Portfolios, Important Days",
+        "expected_questions_tier1": "5–7"
+      },
+      {
+        "category": "History",
+        "topics": "Ancient (Harappan, Vedic, Buddhism/Jainism, Mauryan/Gupta), Medieval (Delhi Sultanate, Mughals, Marathas), Modern (British Rule, Revolt 1857, Freedom Struggle)",
+        "expected_questions_tier1": "2–5"
+      },
+      {
+        "category": "Geography",
+        "topics": "Physical/Political Features (India & World), Rivers/Mountains/Soils, Atmosphere/Ocean Currents, Solar System, Agriculture/Minerals, Transportation, Habitats/Forests",
+        "expected_questions_tier1": "2–3"
+      },
+      {
+        "category": "Polity & Constitution",
+        "topics": "Constitution, Parliament, Fundamental Rights/Duties, President/PM/Judiciary, Election Commission, Panchayati Raj, Symbols of Political Parties",
+        "expected_questions_tier1": "2–3"
+      },
+      {
+        "category": "Economy",
+        "topics": "Basic Concepts, Budget/Inflation, RBI Functions, Economic Planning, Poverty/Unemployment, Five-Year Plans, Fiscal Policy",
+        "expected_questions_tier1": "1–3"
+      },
+      {
+        "category": "General Science",
+        "topics": "Biology (Human Body, Photosynthesis, Ecosystems), Chemistry (Laws, Semi-Conductors), Physics (Electricity, Motion), Everyday Science, Inventions, Scientific Research",
+        "expected_questions_tier1": "4–6"
+      },
+      {
+        "category": "Static GK",
+        "topics": "Important Days, National/International Organizations, Culture/Art & Culture, India & Neighboring Countries (History/Culture/Geography/Economy/Policy), Environmental Issues, Social Issues",
+        "expected_questions_tier1": "3–5"
+      },
+      {
+        "category": "Others",
+        "topics": "Government Policies, Schemes, Scientific Research & Policies",
+        "expected_questions_tier1": "Varies"
+      }
+    ]
+  },
+  "sbi_po_ga": {
+    "title": "SBI PO (Prelims & Mains) General Awareness Topics (2025–2026)",
+    "sources": "SBI official, BankersAdda, Career Power, ixamBee, Guidely, Oliveboard.",
+    "categories": [
+      {
+        "category": "Current Affairs",
+        "topics": "National/International (last 3–6 months), Economic/Financial News, Schemes, Agreements"
+      },
+      {
+        "category": "Banking/Financial Awareness",
+        "topics": "Banking Terms, RBI/SEBI/IRDA Functions, Monetary Policy, Financial Markets, Payment Systems (UPI/NEFT/RTGS), NPA/Basel Norms, Priority Sector Lending, Budget/Economic Survey, Principles of Insurance, Recent Credit Policies"
+      },
+      {
+        "category": "Static Awareness",
+        "topics": "Awards/Honors, Books/Authors, Sports, Important Days, Currencies/Capitals, National Parks/Sanctuaries, Inventions/Discoveries"
+      },
+      {
+        "category": "Economy",
+        "topics": "Inflation, GDP, Fiscal Policy, Banking Reforms, SIDBI/NABARD/RBI Roles"
+      },
+      {
+        "category": "General Knowledge",
+        "topics": "History/Polity/Geography Basics, Major Organizations/Headquarters, International Institutions (IMF/World Bank/UN)"
+      }
+    ]
+  },
+  "other_banking_ga": {
+    "title": "Other Banking Exams (IBPS PO, RBI Assistant, IBPS Clerk) General Awareness Topics (2025–2026)",
+    "sources": "IBPS/RBI official, Testbook, Adda247, ixamBee, Guidely, PracticeMock.",
+    "categories": [
+      {
+        "category": "Current Affairs",
+        "topics": "National/International (last 6 months), Credit/Monetary Policies, Schemes, RBI Circulars, Economy/Banking CA"
+      },
+      {
+        "category": "Banking/Financial Awareness",
+        "topics": "History of Indian Banking, RBI/SEBI/IRDA Functions, Terms (CRR/SLR/NPA), Payment Systems, Basel Norms, Priority Sector Lending, Financial Markets, Banking Acts, Emoluments/Benefits, Principles of Insurance"
+      },
+      {
+        "category": "Static GK",
+        "topics": "Awards/Honors, Books/Authors, Sports, Important Days, Currencies/Capitals, National/International Organizations (IMF/ADB/UN)"
+      },
+      {
+        "category": "Economy",
+        "topics": "Economic Terms, Budget, Inflation, Fiscal Deficit, Monetary Policy Tools"
+      },
+      {
+        "category": "General Knowledge",
+        "topics": "Geography/History/Polity Basics, Science & Technology, Environmental/Social Issues"
+      }
+    ]
+  },
+  "dsssb_delhi_ga": {
+    "title": "DSSSB (Delhi Govt Exams: TGT/PGT/PRT) General Awareness Topics (2025–2026)",
+    "sources": "DSSSB official scheme, Adda247, Career Power, Testbook, Drishti, Jagran Josh.",
+    "categories": [
+      {
+        "category": "Current Events",
+        "topics": "National/International with Delhi Focus (Governance, Economy, Demography, Geography, Administrative Setup in NCT Delhi)"
+      },
+      {
+        "category": "History",
+        "topics": "Indian History (Ancient/Medieval/Modern), Delhi Sultanate, Freedom Movement"
+      },
+      {
+        "category": "Polity/Constitution",
+        "topics": "Indian Polity, Administrative Setup in NCT Delhi, Election, CAG, Duties of Key Persons"
+      },
+      {
+        "category": "Geography",
+        "topics": "India & World, Physical Features, Rivers/Mountains/Soils, Delhi-Specific Geography"
+      },
+      {
+        "category": "Economy",
+        "topics": "Indian Economy, Delhi Economy, Budget, Schemes"
+      },
+      {
+        "category": "Science",
+        "topics": "Everyday Science, Scientific Research, Environmental Issues"
+      },
+      {
+        "category": "Static GK",
+        "topics": "Sports, Art & Culture, Awards, Books/Authors, National/International Organizations, Important Days"
+      },
+      {
+        "category": "Others",
+        "topics": "Social/Cultural Issues, Government Policies in Delhi"
+      }
+    ]
+  },
+  "combined_unique_topics": [
+    "Current Affairs (National/International Events, Awards, Sports, Books/Authors, Schemes, Important Days)",
+    "History (Ancient, Medieval, Modern, Freedom Struggle, Delhi Sultanate)",
+    "Geography (Physical/Political, Rivers/Mountains/Soils, Agriculture, Delhi-Specific)",
+    "Polity & Constitution (Rights/Duties, Parliament, Judiciary, Panchayati Raj, NCT Delhi Setup)",
+    "Economy (Budget/Inflation, RBI Functions, Fiscal Policy, Banking Reforms, Delhi Economy)",
+    "General Science (Biology, Chemistry, Physics, Everyday Science, Inventions, Scientific Research)",
+    "Static GK (Important Days, Organizations, Culture/Art, India & Neighbors, Environmental/Social Issues)",
+    "Banking/Financial Awareness (Terms, RBI/SEBI/IRDA, Monetary Policy, NPA/Basel, Payment Systems, Insurance Principles)",
+    "Government Schemes & Policies",
+    "International Organizations (IMF, World Bank, UN, ADB)",
+    "Delhi-Specific (Governance, Demography, Administrative Setup, Economy/Geography)"
+  ]
+}
