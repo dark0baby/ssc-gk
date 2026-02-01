@@ -1,5 +1,5 @@
 // ────────────────────────────────────────────────
-// Firebase Auth & Firestore functions
+// Authentication functions
 // ────────────────────────────────────────────────
 
 async function signup() {
@@ -44,38 +44,48 @@ function logout() {
 
 function continueAsGuest() {
   document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('user-info').style.display = 'block';
+  document.getElementById('current-user').textContent = "Guest (local only)";
   document.getElementById('input-screen').style.display = 'block';
-  document.getElementById('auth-message').textContent = "Guest mode: progress saved only in this browser";
-  document.getElementById('auth-message').style.color = "#555";
-  loadLocalPlan(); // load any previous guest data
+  loadLocalPlan();
 }
+
+// ────────────────────────────────────────────────
+// Show planner after auth / guest
+// ────────────────────────────────────────────────
 
 function showLoggedIn(email) {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
   document.getElementById('current-user').textContent = email || "Guest";
   document.getElementById('input-screen').style.display = 'block';
-  loadUserData(); // load from Firestore if logged in
+  loadUserData();
 }
 
-// Auth state listener
+// ────────────────────────────────────────────────
+// Auth state listener – controls what is visible
+// ────────────────────────────────────────────────
+
 onAuthStateChanged(auth, (user) => {
+  // Hide everything except auth screen initially
+  document.getElementById('input-screen').style.display = 'none';
+  document.getElementById('plan-screen').style.display = 'none';
+
   if (user) {
     showLoggedIn(user.email);
   } else {
     document.getElementById('auth-screen').style.display = 'block';
     document.getElementById('user-info').style.display = 'none';
-    document.getElementById('input-screen').style.display = 'none';
-    document.getElementById('plan-screen').style.display = 'none';
   }
 });
 
 // ────────────────────────────────────────────────
-// Save plan (Firestore for logged-in users)
+// Save & Load functions
 // ────────────────────────────────────────────────
+
 async function saveUserData(months, dailyTopics) {
   if (!auth.currentUser) {
-    // Guest → save to localStorage only
+    // Guest mode - localStorage
     localStorage.setItem('prepMonths', months);
     localStorage.setItem('guestPlan', JSON.stringify(dailyTopics));
     return;
@@ -88,16 +98,12 @@ async function saveUserData(months, dailyTopics) {
       plan: dailyTopics,
       lastUpdated: new Date().toISOString()
     }, { merge: true });
-    console.log("Plan saved to Firestore");
+    console.log("Saved to Firestore");
   } catch (err) {
-    console.error("Save failed:", err);
-    alert("Failed to save plan. Check your internet.");
+    console.error("Save error:", err);
   }
 }
 
-// ────────────────────────────────────────────────
-// Load saved plan
-// ────────────────────────────────────────────────
 async function loadUserData() {
   if (!auth.currentUser) return;
 
@@ -107,7 +113,7 @@ async function loadUserData() {
     if (docSnap.exists()) {
       const data = docSnap.data();
       document.getElementById('months').value = data.months || "";
-      
+
       if (data.plan && data.plan.length > 0) {
         let html = '';
         data.plan.forEach(item => {
@@ -117,20 +123,21 @@ async function loadUserData() {
           </div>`;
         });
         document.getElementById('daily-plan').innerHTML = html;
+
         document.getElementById('summary').innerHTML = `
           Loaded your saved plan (${data.months} months)<br>
           Last updated: ${new Date(data.lastUpdated).toLocaleString()}
         `;
+
         document.getElementById('input-screen').style.display = 'none';
         document.getElementById('plan-screen').style.display = 'block';
       }
     }
   } catch (err) {
-    console.error("Load failed:", err);
+    console.error("Load error:", err);
   }
 }
 
-// Fallback: load guest/local plan
 function loadLocalPlan() {
   const savedMonths = localStorage.getItem('prepMonths');
   const savedPlan = localStorage.getItem('guestPlan');
@@ -149,14 +156,15 @@ function loadLocalPlan() {
       </div>`;
     });
     document.getElementById('daily-plan').innerHTML = html;
-    document.getElementById('summary').innerHTML = `Loaded your previous guest plan (${savedMonths} months)`;
+
+    document.getElementById('summary').innerHTML = `Loaded previous guest plan (${savedMonths || '?'} months)`;
     document.getElementById('input-screen').style.display = 'none';
     document.getElementById('plan-screen').style.display = 'block';
   }
 }
 
 // ────────────────────────────────────────────────
-// Your existing topics & plan generation
+// Plan generation
 // ────────────────────────────────────────────────
 
 const topics = [
@@ -219,7 +227,7 @@ function generatePlan() {
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'block';
 
-  // Save (Firestore or localStorage)
+  // Save plan
   saveUserData(months, dailyTopics);
 }
 
@@ -230,9 +238,3 @@ function resetPlan() {
   document.getElementById('input-screen').style.display = 'block';
   document.getElementById('plan-screen').style.display = 'none';
 }
-
-// On page load
-window.onload = function() {
-  // Will be handled by onAuthStateChanged for logged-in users
-  // For guests, loadLocalPlan() is called when they choose guest
-};
