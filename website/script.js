@@ -1,3 +1,61 @@
+// ───── AUTH FUNCTIONS ─────
+async function signup() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('auth-message');
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    msg.textContent = "Account created & logged in!";
+    msg.style.color = "green";
+    setTimeout(goToPlanner, 800); // small delay to see success message
+  } catch (error) {
+    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "");
+    msg.style.color = "red";
+  }
+}
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('auth-message');
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    msg.textContent = "Logged in successfully!";
+    msg.style.color = "green";
+    setTimeout(goToPlanner, 800);
+  } catch (error) {
+    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "");
+    msg.style.color = "red";
+  }
+}
+function continueAsGuest() {
+  goToPlanner();
+  document.getElementById('current-user').textContent = "Guest (local save only)";
+}
+function logout() {
+  signOut(auth);
+}
+// ───── MAIN FUNCTION THAT SHOWS THE PLANNER ─────
+function goToPlanner() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('user-info').style.display = 'block';
+  document.getElementById('input-screen').style.display = 'block';
+  loadUserData(); // will load saved plan if any
+}
+// ───── AUTH STATE LISTENER (MOST IMPORTANT) ─────
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // User is logged in → show planner directly
+    document.getElementById('current-user').textContent = user.email;
+    goToPlanner();
+  } else {
+    // Not logged in → show login screen
+    document.getElementById('auth-screen').style.display = 'block';
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('input-screen').style.display = 'none';
+    document.getElementById('plan-screen').style.display = 'none';
+  }
+});
+
 // ───── TOP: CONSTANTS FIRST (fixes initialization error) ─────
 const sscFocusTopics = [
   "Current Affairs (National/International, Schemes, Awards)",
