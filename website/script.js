@@ -1,16 +1,33 @@
+// ───── TOP: CONSTANTS FIRST (fixes initialization error) ─────
+const sscFocusTopics = [
+  "Current Affairs (National/International, Schemes, Awards)",
+  "History (Ancient, Medieval, Modern)",
+  "Geography (Physical, India & World)",
+  "Polity & Constitution",
+  "Economy (Basics, Budget, RBI)",
+  "General Science (Biology, Physics, Chemistry)",
+  "Static GK (Days, Organizations, Culture)"
+];
+
 // ───── AUTH FUNCTIONS ─────
 async function signup() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const msg = document.getElementById('auth-message');
 
+  if (!email || !password) {
+    msg.textContent = "Please enter email and password";
+    msg.style.color = "red";
+    return;
+  }
+
   try {
     await createUserWithEmailAndPassword(auth, email, password);
     msg.textContent = "Account created & logged in!";
     msg.style.color = "green";
-    setTimeout(goToPlanner, 800); // small delay to see success message
+    setTimeout(goToPlanner, 800);
   } catch (error) {
-    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "");
+    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
     msg.style.color = "red";
   }
 }
@@ -26,36 +43,36 @@ async function login() {
     msg.style.color = "green";
     setTimeout(goToPlanner, 800);
   } catch (error) {
-    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "");
+    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
     msg.style.color = "red";
   }
-}
-
-function continueAsGuest() {
-  goToPlanner();
-  document.getElementById('current-user').textContent = "Guest (local save only)";
 }
 
 function logout() {
   signOut(auth);
 }
 
-// ───── MAIN FUNCTION THAT SHOWS THE PLANNER ─────
+function continueAsGuest() {
+  document.getElementById('current-user').textContent = "Guest (local save only)";
+  goToPlanner();
+}
+
+// ───── MAIN SHOW PLANNER FUNCTION ─────
 function goToPlanner() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
   document.getElementById('input-screen').style.display = 'block';
-  loadUserData(); // will load saved plan if any
+  loadUserData();
 }
 
-// ───── AUTH STATE LISTENER (MOST IMPORTANT) ─────
+// ───── AUTH LISTENER ─────
 onAuthStateChanged(auth, (user) => {
+  console.log("Auth state changed:", user ? "Logged in" : "Logged out"); // debug
+
   if (user) {
-    // User is logged in → show planner directly
     document.getElementById('current-user').textContent = user.email;
     goToPlanner();
   } else {
-    // Not logged in → show login screen
     document.getElementById('auth-screen').style.display = 'block';
     document.getElementById('user-info').style.display = 'none';
     document.getElementById('input-screen').style.display = 'none';
@@ -63,18 +80,24 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ───── REST OF YOUR CODE (SAVE, LOAD, GENERATE PLAN) ─────
+// ───── SAVE & LOAD ─────
 async function saveUserData(months, dailyTopics) {
   if (!auth.currentUser) {
     localStorage.setItem('prepMonths', months);
     localStorage.setItem('guestPlan', JSON.stringify(dailyTopics));
     return;
   }
+
   try {
     await setDoc(doc(db, "users", auth.currentUser.uid), {
-      months, plan: dailyTopics, lastUpdated: new Date().toISOString()
+      months,
+      plan: dailyTopics,
+      lastUpdated: new Date().toISOString()
     }, { merge: true });
-  } catch (e) { console.error(e); }
+    console.log("Plan saved to Firestore");
+  } catch (e) {
+    console.error("Save failed:", e);
+  }
 }
 
 async function loadUserData() {
@@ -82,27 +105,40 @@ async function loadUserData() {
     loadLocalPlan();
     return;
   }
-  const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-  if (snap.exists()) {
-    const data = snap.data();
-    document.getElementById('months').value = data.months || "";
-    if (data.plan) {
-      displayPlan(data.plan, data.months);
+
+  try {
+    const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      document.getElementById('months').value = data.months || "";
+      if (data.plan) {
+        displayPlan(data.plan, data.months);
+      }
+    }
+  } catch (err) {
+    console.error("Load failed:", err);
+    if (err.message.includes("offline")) {
+      alert("You appear to be offline. Saved plans may not load until you're back online.");
     }
   }
 }
 
 function loadLocalPlan() {
   const months = localStorage.getItem('prepMonths');
-  const plan = localStorage.getItem('guestPlan');
+  const planJson = localStorage.getItem('guestPlan');
   if (months) document.getElementById('months').value = months;
-  if (plan) displayPlan(JSON.parse(plan), months);
+  if (planJson) {
+    displayPlan(JSON.parse(planJson), months);
+  }
 }
 
 function displayPlan(dailyTopics, months) {
   let html = '';
   dailyTopics.forEach(item => {
-    html += `<div class="day-card"><strong>${item.day}</strong><br>Topics: ${item.topics.join(' + ')}</div>`;
+    html += `<div class="day-card">
+      <strong>${item.day}</strong><br>
+      Topics: ${item.topics.join(' + ')}
+    </div>`;
   });
   document.getElementById('daily-plan').innerHTML = html;
   document.getElementById('summary').innerHTML = `Loaded your saved plan (${months} months)`;
@@ -110,23 +146,11 @@ function displayPlan(dailyTopics, months) {
   document.getElementById('plan-screen').style.display = 'block';
 }
 
-// ───── PLAN GENERATION (same as before) ─────
-const sscFocusTopics = [
-  "Current Affairs (National/International, Schemes, Awards)",
-  "History (Ancient, Medieval, Modern)",
-  "Geography (Physical, India & World)",
-  "Polity & Constitution",
-  "Economy (Basics, Budget, RBI)",
-  "General Science (Biology, Physics, Chemistry)",
-  "Static GK (Days, Organizations, Culture)"
-];
-
+// ───── GENERATE PLAN ─────
 function generatePlan() {
-  const monthsInput = document.getElementById('months').value;
-  const months = parseInt(monthsInput);
-
+  const months = parseInt(document.getElementById('months').value);
   if (!months || months < 1) {
-    alert("Please enter a valid number of months (1 or more).");
+    alert("Enter a valid number of months (1 or more)");
     return;
   }
 
@@ -137,21 +161,17 @@ function generatePlan() {
   let topicIndex = 0;
   let dailyTopics = [];
 
-  // Preparation phase
-  for (let day = 1; day <= prepDays; day++) {
-    const topic1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
-    const topic2 = (day % 2 === 0) ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
-    dailyTopics.push({ day: `Day ${day} (Prep)`, topics: topic2 ? [topic1, topic2] : [topic1] });
+  for (let d = 1; d <= prepDays; d++) {
+    const t1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
+    const t2 = d % 2 === 0 ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
+    dailyTopics.push({ day: `Day ${d} (Prep)`, topics: t2 ? [t1, t2] : [t1] });
     topicIndex++;
   }
 
-  // Revision phase
-  for (let day = 1; day <= revisionDays; day++) {
-    const topic = sscFocusTopics[day % sscFocusTopics.length];
-    dailyTopics.push({ day: `Day ${prepDays + day} (Revision)`, topics: [topic] });
+  for (let d = 1; d <= revisionDays; d++) {
+    dailyTopics.push({ day: `Day ${prepDays + d} (Revision)`, topics: [sscFocusTopics[d % sscFocusTopics.length]] });
   }
 
-  // Build HTML for daily plan cards
   let html = '';
   dailyTopics.forEach(item => {
     html += `<div class="day-card">
@@ -160,20 +180,16 @@ function generatePlan() {
     </div>`;
   });
 
-  // Update UI
+  document.getElementById('daily-plan').innerHTML = html;
   document.getElementById('summary').innerHTML = `
-    You have <strong>${months} months (~${totalDays} days)</strong>.<br>
-    Preparation: ${prepDays} days • Revision: ${revisionDays} days.<br>
-    Daily: 1–2 topics (focus on SSC CGL GA).
+    <strong>${months} months (~${totalDays} days)</strong><br>
+    Preparation: ${prepDays} days • Revision: ${revisionDays} days<br>
+    Daily: 1–2 topics
   `;
 
-  document.getElementById('daily-plan').innerHTML = html;
-
-  // Switch to plan view
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'block';
 
-  // Save the plan
   saveUserData(months, dailyTopics);
 }
 
