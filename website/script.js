@@ -55,7 +55,49 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('plan-screen').style.display = 'none';
   }
 });
-
+// ───── REST OF YOUR CODE (SAVE, LOAD, GENERATE PLAN) ─────
+async function saveUserData(months, dailyTopics) {
+  if (!auth.currentUser) {
+    localStorage.setItem('prepMonths', months);
+    localStorage.setItem('guestPlan', JSON.stringify(dailyTopics));
+    return;
+  }
+  try {
+    await setDoc(doc(db, "users", auth.currentUser.uid), {
+      months, plan: dailyTopics, lastUpdated: new Date().toISOString()
+    }, { merge: true });
+  } catch (e) { console.error(e); }
+}
+async function loadUserData() {
+  if (!auth.currentUser) {
+    loadLocalPlan();
+    return;
+  }
+  const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+  if (snap.exists()) {
+    const data = snap.data();
+    document.getElementById('months').value = data.months || "";
+    if (data.plan) {
+      displayPlan(data.plan, data.months);
+    }
+  }
+}
+function loadLocalPlan() {
+  const months = localStorage.getItem('prepMonths');
+  const plan = localStorage.getItem('guestPlan');
+  if (months) document.getElementById('months').value = months;
+  if (plan) displayPlan(JSON.parse(plan), months);
+}
+function displayPlan(dailyTopics, months) {
+  let html = '';
+  dailyTopics.forEach(item => {
+    html += `<div class="day-card"><strong>${item.day}</strong><br>Topics: ${item.topics.join(' + ')}</div>`;
+  });
+  document.getElementById('daily-plan').innerHTML = html;
+  document.getElementById('summary').innerHTML = `Loaded your saved plan (${months} months)`;
+  document.getElementById('input-screen').style.display = 'none';
+  document.getElementById('plan-screen').style.display = 'block';
+}
 // ───── TOP: CONSTANTS FIRST (fixes initialization error) ─────
 const sscFocusTopics = [
   "Current Affairs (National/International, Schemes, Awards)",
