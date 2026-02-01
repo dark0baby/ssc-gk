@@ -4,7 +4,7 @@ Unique topics from DSSSB official, Adda247, Physics Wallah, BYJU'S, Career Power
 
 | Category | Topics |
 |----------|--------|
-| Current Events | National/International (Focus on Delhi: Governance, Economy, Demography, Geography) |
+| Current Events | National/International (Focus on Delhi: Governance, Economy, Demography, Geography, Administrative Setup in NCT Delhi) |
 | History | Indian History (Ancient/Medieval/Modern), Delhi Sultanate, Freedom Movement |
 | Polity/Constitution | Indian Polity, Administrative Setup in NCT Delhi, Election, CAG, Duties of Key Persons |
 | Geography | India & World, Physical Features, Rivers/Mountains, Soils, Delhi-Specific Geography |
