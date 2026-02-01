@@ -7,12 +7,13 @@ async function signup() {
     await createUserWithEmailAndPassword(auth, email, password);
     msg.textContent = "Account created & logged in!";
     msg.style.color = "green";
-    setTimeout(goToPlanner, 800); // small delay to see success message
+    setTimeout(goToPlanner, 800);
   } catch (error) {
-    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "");
+    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
     msg.style.color = "red";
   }
 }
+
 async function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
@@ -23,141 +24,21 @@ async function login() {
     msg.style.color = "green";
     setTimeout(goToPlanner, 800);
   } catch (error) {
-    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "");
+    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
     msg.style.color = "red";
   }
 }
+
 function continueAsGuest() {
-  goToPlanner();
   document.getElementById('current-user').textContent = "Guest (local save only)";
+  goToPlanner();
 }
+
 function logout() {
   signOut(auth);
 }
+
 // ───── MAIN FUNCTION THAT SHOWS THE PLANNER ─────
-function goToPlanner() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('user-info').style.display = 'block';
-  document.getElementById('input-screen').style.display = 'block';
-  loadUserData(); // will load saved plan if any
-}
-// ───── AUTH STATE LISTENER (MOST IMPORTANT) ─────
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    // User is logged in → show planner directly
-    document.getElementById('current-user').textContent = user.email;
-    goToPlanner();
-  } else {
-    // Not logged in → show login screen
-    document.getElementById('auth-screen').style.display = 'block';
-    document.getElementById('user-info').style.display = 'none';
-    document.getElementById('input-screen').style.display = 'none';
-    document.getElementById('plan-screen').style.display = 'none';
-  }
-});
-// ───── REST OF YOUR CODE (SAVE, LOAD, GENERATE PLAN) ─────
-async function saveUserData(months, dailyTopics) {
-  if (!auth.currentUser) {
-    localStorage.setItem('prepMonths', months);
-    localStorage.setItem('guestPlan', JSON.stringify(dailyTopics));
-    return;
-  }
-  try {
-    await setDoc(doc(db, "users", auth.currentUser.uid), {
-      months, plan: dailyTopics, lastUpdated: new Date().toISOString()
-    }, { merge: true });
-  } catch (e) { console.error(e); }
-}
-async function loadUserData() {
-  if (!auth.currentUser) {
-    loadLocalPlan();
-    return;
-  }
-  const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-  if (snap.exists()) {
-    const data = snap.data();
-    document.getElementById('months').value = data.months || "";
-    if (data.plan) {
-      displayPlan(data.plan, data.months);
-    }
-  }
-}
-function loadLocalPlan() {
-  const months = localStorage.getItem('prepMonths');
-  const plan = localStorage.getItem('guestPlan');
-  if (months) document.getElementById('months').value = months;
-  if (plan) displayPlan(JSON.parse(plan), months);
-}
-function displayPlan(dailyTopics, months) {
-  let html = '';
-  dailyTopics.forEach(item => {
-    html += `<div class="day-card"><strong>${item.day}</strong><br>Topics: ${item.topics.join(' + ')}</div>`;
-  });
-  document.getElementById('daily-plan').innerHTML = html;
-  document.getElementById('summary').innerHTML = `Loaded your saved plan (${months} months)`;
-  document.getElementById('input-screen').style.display = 'none';
-  document.getElementById('plan-screen').style.display = 'block';
-}
-// ───── TOP: CONSTANTS FIRST (fixes initialization error) ─────
-const sscFocusTopics = [
-  "Current Affairs (National/International, Schemes, Awards)",
-  "History (Ancient, Medieval, Modern)",
-  "Geography (Physical, India & World)",
-  "Polity & Constitution",
-  "Economy (Basics, Budget, RBI)",
-  "General Science (Biology, Physics, Chemistry)",
-  "Static GK (Days, Organizations, Culture)"
-];
-
-// ───── AUTH FUNCTIONS ─────
-async function signup() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const msg = document.getElementById('auth-message');
-
-  if (!email || !password) {
-    msg.textContent = "Please enter email and password";
-    msg.style.color = "red";
-    return;
-  }
-
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    msg.textContent = "Account created & logged in!";
-    msg.style.color = "green";
-    setTimeout(goToPlanner, 800);
-  } catch (error) {
-    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
-    msg.style.color = "red";
-  }
-}
-
-async function login() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const msg = document.getElementById('auth-message');
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    msg.textContent = "Logged in successfully!";
-    msg.style.color = "green";
-    setTimeout(goToPlanner, 800);
-  } catch (error) {
-    msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
-    msg.style.color = "red";
-  }
-}
-
-function logout() {
-  signOut(auth);
-}
-
-function continueAsGuest() {
-  document.getElementById('current-user').textContent = "Guest (local save only)";
-  goToPlanner();
-}
-
-// ───── MAIN SHOW PLANNER FUNCTION ─────
 function goToPlanner() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
@@ -165,10 +46,8 @@ function goToPlanner() {
   loadUserData();
 }
 
-// ───── AUTH LISTENER ─────
+// ───── AUTH STATE LISTENER ─────
 onAuthStateChanged(auth, (user) => {
-  console.log("Auth state changed:", user ? "Logged in" : "Logged out"); // debug
-
   if (user) {
     document.getElementById('current-user').textContent = user.email;
     goToPlanner();
@@ -177,59 +56,47 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('user-info').style.display = 'none';
     document.getElementById('input-screen').style.display = 'none';
     document.getElementById('plan-screen').style.display = 'none';
+    document.getElementById('daily-view').style.display = 'none';
+    document.getElementById('quiz-screen').style.display = 'none';
   }
 });
 
-// ───── SAVE & LOAD ─────
-async function saveUserData(months, dailyTopics) {
+// ───── SAVE / LOAD ─────
+async function saveUserData(key, value) {
   if (!auth.currentUser) {
-    localStorage.setItem('prepMonths', months);
-    localStorage.setItem('guestPlan', JSON.stringify(dailyTopics));
+    localStorage.setItem(key, JSON.stringify(value));
     return;
   }
-
   try {
-    await setDoc(doc(db, "users", auth.currentUser.uid), {
-      months,
-      plan: dailyTopics,
-      lastUpdated: new Date().toISOString()
-    }, { merge: true });
-    console.log("Plan saved to Firestore");
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await setDoc(userRef, { [key]: value }, { merge: true });
+    console.log(`Saved ${key} to Firestore`);
   } catch (e) {
     console.error("Save failed:", e);
   }
 }
 
-async function loadUserData() {
+async function loadUserData(key) {
   if (!auth.currentUser) {
-    loadLocalPlan();
-    return;
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : null;
   }
-
   try {
     const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
     if (snap.exists()) {
-      const data = snap.data();
-      document.getElementById('months').value = data.months || "";
-      if (data.plan) {
-        displayPlan(data.plan, data.months);
-      }
+      return snap.data()[key];
     }
-  } catch (err) {
-    console.error("Load failed:", err);
-    if (err.message.includes("offline")) {
-      alert("You appear to be offline. Saved plans may not load until you're back online.");
-    }
+  } catch (e) {
+    console.error("Load failed:", e);
   }
+  return null;
 }
 
 function loadLocalPlan() {
   const months = localStorage.getItem('prepMonths');
-  const planJson = localStorage.getItem('guestPlan');
+  const plan = localStorage.getItem('guestPlan');
   if (months) document.getElementById('months').value = months;
-  if (planJson) {
-    displayPlan(JSON.parse(planJson), months);
-  }
+  if (plan) displayPlan(JSON.parse(plan), months);
 }
 
 function displayPlan(dailyTopics, months) {
@@ -246,8 +113,214 @@ function displayPlan(dailyTopics, months) {
   document.getElementById('plan-screen').style.display = 'block';
 }
 
-// ───── GENERATE PLAN ─────
-function generatePlan() {
+// ───── CONSTANTS ─────
+const sscFocusTopics = [
+  "Current Affairs (National/International, Schemes, Awards)",
+  "History (Ancient, Medieval, Modern)",
+  "Geography (Physical, India & World)",
+  "Polity & Constitution",
+  "Economy (Basics, Budget, RBI)",
+  "General Science (Biology, Physics, Chemistry)",
+  "Static GK (Days, Organizations, Culture)"
+];
+
+// ───── PLAN GENERATION ─────
+async function generatePlan() {
+  const months = parseInt(document.getElementById('months').value);
+  if (!months || months < 1) {
+    alert("Enter a valid number of months (1 or more)");
+    return;
+  }
+
+  const totalDays = months * 30;
+  const prepDays = Math.floor(totalDays * 0.8);
+  const revisionDays = totalDays - prepDays;
+
+  let topicIndex = 0;
+  let dailyTopics = [];
+
+  // Prep phase - interleave topics
+  for (let d = 1; d <= prepDays; d++) {
+    const t1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
+    const t2 = d % 2 === 0 ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
+    dailyTopics.push({ day: `Day ${d} (Prep)`, topics: t2 ? [t1, t2] : [t1] });
+    topicIndex++;
+  }
+
+  // Revision phase
+  for (let d = 1; d <= revisionDays; d++) {
+    dailyTopics.push({ day: `Day ${prepDays + d} (Revision)`, topics: [sscFocusTopics[d % sscFocusTopics.length]] });
+  }
+
+  let html = '';
+  dailyTopics.forEach(item => {
+    html += `<div class="day-card">
+      <strong>${item.day}</strong><br>
+      Topics: ${item.topics.join(' + ')}
+    </div>`;
+  });
+
+  document.getElementById('daily-plan').innerHTML = html;
+  document.getElementById('summary').innerHTML = `
+    <strong>${months} months (~${totalDays} days)</strong><br>
+    Preparation: ${prepDays} days • Revision: ${revisionDays} days<br>
+    Daily: 1–2 topics
+  `;
+
+  document.getElementById('input-screen').style.display = 'none';
+  document.getElementById('plan-screen').style.display = 'block';
+
+  // Save
+  saveUserData('plan', dailyTopics);
+  saveUserData('months', months);
+}
+
+// ───── START TODAY ─────
+async function startToday() {
+  const today = new Date().toISOString().split('T')[0];
+  saveUserData('startDate', today);
+  alert("Preparation started from today! Check daily at 6AM.");
+  showDailyView();
+}
+
+// ───── SHOW DAILY VIEW ─────
+async function showDailyView() {
+  document.getElementById('plan-screen').style.display = 'none';
+  document.getElementById('daily-view').style.display = 'block';
+
+  const startDateStr = await loadUserData('startDate');
+  if (!startDateStr) {
+    alert("Start your preparation with 'Start Today' button.");
+    return;
+  }
+
+  const startDate = new Date(startDateStr);
+  const today = new Date();
+  const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+  const plan = await loadUserData('plan');
+  if (!plan || currentDay > plan.length) {
+    alert("Preparation complete or no plan found.");
+    return;
+  }
+
+  const todayItem = plan[currentDay - 1];
+  document.getElementById('current-day').innerText = currentDay;
+  document.getElementById('today-topic').innerHTML = `<strong>Today's Topic(s):</strong> ${todayItem.topics.join(' + ')}`;
+
+  // Generate full content via Grok API
+  let contentHtml = '';
+  for (const topic of todayItem.topics) {
+    const content = await callGrokAPI(`Generate full detailed chapter on "${topic}" for SSC CGL General Awareness from Lucent GK and NCERT books. Include all key facts, examples, diagrams descriptions, PYQ trends, and important points. Full content, no summaries - 800-1500 words.`);
+    contentHtml += `<h3>${topic}</h3><p>${content}</p>`;
+  }
+  document.getElementById('today-content').innerHTML = contentHtml;
+}
+
+// ───── QUIZ FUNCTIONS ─────
+async function startQuiz() {
+  document.getElementById('daily-view').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+
+  const todayTopic = document.getElementById('today-topic').textContent.split(':')[1].trim();
+  const progress = await loadUserData('quizProgress') || {};
+  const wrongQ = progress[todayTopic] || [];
+
+  // Generate fresh PYQs if needed
+  const prompt = `Generate 20 SSC CGL Tier-1 GA questions on "${todayTopic}" (2016-2025 style). Include 4 options, correct answer, short explanation, difficulty (Easy/Medium/Hard). Format as JSON array of objects: {q, options, a, explanation, difficulty, attempts:0, correct:0}.`;
+  const jsonStr = await callGrokAPI(prompt);
+  let newQuestions = JSON.parse(jsonStr);
+  newQuestions.forEach(q => { q.attempts = 0; q.correct = 0; });
+
+  // Mix new + wrong
+  const quizQ = [...newQuestions.slice(0, 12), ...wrongQ.slice(0, 8)];
+
+  let html = '';
+  quizQ.forEach((q, i) => {
+    html += `<p>${i+1}. ${q.q} (Difficulty: ${q.difficulty})</p>`;
+    q.options.forEach(opt => {
+      html += `<label><input type="radio" name="q${i}" value="${opt}">${opt}</label><br>`;
+    });
+  });
+  document.getElementById('quiz-questions').innerHTML = html;
+
+  window.currentQuiz = quizQ;
+  window.currentTopic = todayTopic;
+}
+
+async function submitQuiz() {
+  const progress = await loadUserData('quizProgress') || {};
+  const wrongQ = progress[window.currentTopic] || [];
+  let score = 0;
+
+  window.currentQuiz.forEach((q, i) => {
+    const selected = document.querySelector(`input[name="q${i}"]:checked`)?.value;
+    q.attempts = (q.attempts || 0) + 1;
+    if (selected === q.a) {
+      q.correct = (q.correct || 0) + 1;
+      score++;
+    } else {
+      wrongQ.push(q);
+    }
+  });
+
+  document.getElementById('quiz-score').innerHTML = `Score: ${score} / ${window.currentQuiz.length}`;
+
+  // Keep wrong if <80%
+  const updatedWrong = window.currentQuiz.filter(q => (q.correct / q.attempts) < 0.8);
+  progress[window.currentTopic] = updatedWrong;
+  saveUserData('quizProgress', progress);
+
+  // Save daily score
+  const today = new Date().toISOString().split('T')[0];
+  const scores = await loadUserData('quizScores') || {};
+  scores[today] = score;
+  saveUserData('quizScores', scores);
+
+  document.getElementById('repeat-wrong').style.display = updatedWrong.length > 0 ? 'block' : 'none';
+
+  // Adaptive next day
+  const scorePct = (score / window.currentQuiz.length) * 100;
+  const nextDifficulty = scorePct < 60 ? 'Easy' : scorePct < 80 ? 'Medium' : 'Hard';
+  saveUserData('nextDifficulty', nextDifficulty);
+}
+
+function repeatWrongQuestions() {
+  startQuiz(); // reload
+}
+
+function finishDay() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  alert("Day complete! See you tomorrow after 6AM.");
+}
+
+// ───── GROK API CALL ─────
+async function callGrokAPI(prompt) {
+  try {
+    const response = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer xai-O7WFcl8uGp83FxJvz1sGDUoaVFJNPT2O1AkyQQ8TDkAXro8yYpH8sRzMCOa2Jq2ENS6pOBqP7lAWVNdj'
+      },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: prompt }],
+        model: "grok-4-latest",
+        temperature: 0.7,
+        stream: false
+      })
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch (e) {
+    console.error("Grok API failed:", e);
+    return "Error: Could not generate content. Try again later.";
+  }
+}
+
+// ───── PLAN GENERATION (adaptive) ─────
+async function generatePlan() {
   const months = parseInt(document.getElementById('months').value);
   if (!months || months < 1) {
     alert("Enter a valid number of months (1 or more)");
@@ -290,7 +363,8 @@ function generatePlan() {
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'block';
 
-  saveUserData(months, dailyTopics);
+  saveUserData('plan', dailyTopics);
+  saveUserData('months', months);
 }
 
 function resetPlan() {
@@ -299,3 +373,18 @@ function resetPlan() {
   document.getElementById('input-screen').style.display = 'block';
   document.getElementById('plan-screen').style.display = 'none';
 }
+
+// ───── LOAD ON PAGE ─────
+window.onload = async () => {
+  const startDate = await loadUserData('startDate');
+  if (startDate) {
+    const now = new Date();
+    if (now.getHours() >= 6) {
+      showDailyView();
+    } else {
+      alert("New day starts at 6AM. Come back then.");
+    }
+  } else {
+    // show input or plan
+  }
+};
