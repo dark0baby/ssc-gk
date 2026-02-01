@@ -112,39 +112,68 @@ function displayPlan(dailyTopics, months) {
 
 // ───── PLAN GENERATION (same as before) ─────
 const sscFocusTopics = [
-  "Current Affairs", "History", "Geography", "Polity & Constitution",
-  "Economy", "General Science", "Static GK"
+  "Current Affairs (National/International, Schemes, Awards)",
+  "History (Ancient, Medieval, Modern)",
+  "Geography (Physical, India & World)",
+  "Polity & Constitution",
+  "Economy (Basics, Budget, RBI)",
+  "General Science (Biology, Physics, Chemistry)",
+  "Static GK (Days, Organizations, Culture)"
 ];
 
 function generatePlan() {
-  const months = parseInt(document.getElementById('months').value);
-  if (!months || months < 1) return alert("Enter valid months");
+  const monthsInput = document.getElementById('months').value;
+  const months = parseInt(monthsInput);
+
+  if (!months || months < 1) {
+    alert("Please enter a valid number of months (1 or more).");
+    return;
+  }
 
   const totalDays = months * 30;
   const prepDays = Math.floor(totalDays * 0.8);
   const revisionDays = totalDays - prepDays;
+
   let topicIndex = 0;
   let dailyTopics = [];
 
-  for (let d = 1; d <= prepDays; d++) {
-    const t1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
-    const t2 = d % 2 === 0 ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
-    dailyTopics.push({ day: `Day ${d} (Prep)`, topics: t2 ? [t1, t2] : [t1] });
+  // Preparation phase
+  for (let day = 1; day <= prepDays; day++) {
+    const topic1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
+    const topic2 = (day % 2 === 0) ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
+    dailyTopics.push({ day: `Day ${day} (Prep)`, topics: topic2 ? [topic1, topic2] : [topic1] });
     topicIndex++;
   }
-  for (let d = 1; d <= revisionDays; d++) {
-    dailyTopics.push({ day: `Day ${prepDays + d} (Revision)`, topics: [sscFocusTopics[d % sscFocusTopics.length]] });
+
+  // Revision phase
+  for (let day = 1; day <= revisionDays; day++) {
+    const topic = sscFocusTopics[day % sscFocusTopics.length];
+    dailyTopics.push({ day: `Day ${prepDays + day} (Revision)`, topics: [topic] });
   }
 
+  // Build HTML for daily plan cards
   let html = '';
   dailyTopics.forEach(item => {
-    html += `<div class="day-card"><strong>${item.day}</strong><br>Topics: ${item.topics.join(' + ')}</div>`;
+    html += `<div class="day-card">
+      <strong>${item.day}</strong><br>
+      Topics: ${item.topics.join(' + ')}
+    </div>`;
   });
+
+  // Update UI
+  document.getElementById('summary').innerHTML = `
+    You have <strong>${months} months (~${totalDays} days)</strong>.<br>
+    Preparation: ${prepDays} days • Revision: ${revisionDays} days.<br>
+    Daily: 1–2 topics (focus on SSC CGL GA).
+  `;
+
   document.getElementById('daily-plan').innerHTML = html;
-  document.getElementById('summary').innerHTML = `<strong>${months} months</strong> • Prep: ${prepDays} days • Revision: ${revisionDays} days`;
+
+  // Switch to plan view
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'block';
 
+  // Save the plan
   saveUserData(months, dailyTopics);
 }
 
