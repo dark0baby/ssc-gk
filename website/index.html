@@ -10,30 +10,27 @@
   <div class="container">
     <h1>GA Preparation Planner</h1>
 
-    <!-- Auth screen - shown by default -->
+    <!-- Auth screen -->
     <div id="auth-screen">
       <h2>Login or Sign Up</h2>
       <p>Save your preparation plan across devices</p>
-
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password (min 6 characters)" required />
-
       <div style="margin: 20px 0;">
         <button onclick="signup()">Sign Up</button>
         <button onclick="login()">Log In</button>
         <button onclick="continueAsGuest()" style="background:#666;">Continue as Guest</button>
       </div>
-
       <p id="auth-message" style="color: red; min-height: 24px;"></p>
     </div>
 
-    <!-- Logged-in user info -->
+    <!-- User info -->
     <div id="user-info" style="display:none; margin: 20px 0; text-align:center;">
       <p>Logged in as: <strong id="current-user"></strong></p>
       <button onclick="logout()" style="background:#c0392b; color:white;">Log Out</button>
     </div>
 
-    <!-- Months input - hidden until authenticated or guest -->
+    <!-- Input for months - hidden initially -->
     <div id="input-screen" style="display: none;">
       <h2>How many months until your exam?</h2>
       <p>Enter a number like 1, 3, 5, 6, 12, 15 etc.</p>
@@ -41,7 +38,7 @@
       <button onclick="generatePlan()">Generate My Plan</button>
     </div>
 
-    <!-- Generated plan - hidden until Generate is clicked -->
+    <!-- Generated plan -->
     <div id="plan-screen" style="display: none;">
       <h2>Your Custom Plan</h2>
       <p id="summary"></p>
@@ -54,19 +51,10 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      onAuthStateChanged,
-      signOut
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+      onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-
-    import {
-      getFirestore,
-      doc,
-      setDoc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDQmKUc29kiogHRB1juJSdoW28499leCdQ",
@@ -82,16 +70,15 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Expose all needed items globally for script.js
-    window.auth                          = auth;
-    window.db                             = db;
+    window.auth = auth;
+    window.db = db;
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-    window.signInWithEmailAndPassword     = signInWithEmailAndPassword;
-    window.onAuthStateChanged             = onAuthStateChanged;
-    window.signOut                        = signOut;
-    window.doc                            = doc;
-    window.setDoc                         = setDoc;
-    window.getDoc                         = getDoc;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.signOut = signOut;
+    window.doc = doc;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
   </script>
 
   <script src="script.js"></script>
