@@ -1,3 +1,67 @@
+// Auth functions
+async function signup() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('auth-message');
+
+  if (!email || !password) {
+    msg.textContent = "Please enter email and password";
+    return;
+  }
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    msg.textContent = "Account created! Logging in...";
+    msg.style.color = "green";
+    // User is auto-logged in
+  } catch (error) {
+    msg.textContent = error.message.replace("Firebase: ", "");
+  }
+}
+
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const msg = document.getElementById('auth-message');
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    msg.textContent = "Logged in successfully!";
+    msg.style.color = "green";
+  } catch (error) {
+    msg.textContent = error.message.replace("Firebase: ", "");
+  }
+}
+
+function logout() {
+  signOut(auth);
+}
+
+function continueAsGuest() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('input-screen').style.display = 'block';
+  // Optionally show a note: guest mode, data local only
+}
+
+function showLoggedIn(email) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('user-info').style.display = 'block';
+  document.getElementById('current-user').textContent = email || "Guest";
+  document.getElementById('input-screen').style.display = 'block';
+  loadUserData();  // Try to load saved plan
+}
+
+// Real-time auth listener
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    showLoggedIn(user.email);
+  } else {
+    document.getElementById('auth-screen').style.display = 'block';
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('input-screen').style.display = 'none';
+    document.getElementById('plan-screen').style.display = 'none';
+  }
+});
 // Sample topics array (later load from your JSON file or hardcode more)
 const topics = [
   "Current Affairs (National/International, Schemes, Awards)",
