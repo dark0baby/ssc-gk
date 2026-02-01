@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GA Prep Planner - Keshav</title>
   <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fa; }
+    .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    h1, h2 { color: #2c3e50; }
+    input, button { padding: 12px; margin: 8px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #3498db; color: white; border: none; cursor: pointer; }
+    button:hover { background: #2980b9; }
+    .day-card { background: #ecf0f1; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 5px solid #3498db; }
+    #today-content, #quiz-questions { line-height: 1.7; }
+    #quiz-questions label { display: block; margin: 8px 0; }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -14,52 +25,54 @@
       <h2>Login or Sign Up</h2>
       <p>Save your preparation plan across devices</p>
       <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password (min 6 characters)" required />
+      <input type="password" id="password" placeholder="Password (min 6 chars)" required />
       <div style="margin: 20px 0;">
         <button onclick="signup()">Sign Up</button>
         <button onclick="login()">Log In</button>
-        <button onclick="continueAsGuest()" style="background:#666;">Continue as Guest</button>
+        <button onclick="continueAsGuest()" style="background:#777;">Continue as Guest</button>
       </div>
-      <p id="auth-message" style="color: red; min-height: 24px;"></p>
+      <p id="auth-message" style="color:red;"></p>
     </div>
 
-    <div id="user-info" style="display:none; margin: 20px 0;">
-      <p>Logged in as: <span id="current-user"></span></p>
-      <button onclick="logout()" style="background:#c0392b;">Log Out</button>
+    <div id="user-info" style="display:none; text-align:center; margin:20px 0;">
+      <p>Logged in as: <strong id="current-user"></strong></p>
+      <button onclick="logout()" style="background:#e74c3c;">Log Out</button>
     </div>
 
-    <div id="input-screen" style="display: none;">
+    <div id="input-screen" style="display:none;">
       <h2>How many months until your exam?</h2>
-      <p>Enter a number like 1, 3, 5, 6, 12, 15 etc.</p>
+      <p>Enter a number (1–36)</p>
       <input type="number" id="months" min="1" max="36" placeholder="e.g. 6" required />
       <button onclick="generatePlan()">Generate My Plan</button>
     </div>
 
-    <div id="plan-screen" style="display: none;">
-      <h2>Your Custom Plan</h2>
+    <div id="plan-screen" style="display:none;">
+      <h2>Your Preparation Plan</h2>
       <p id="summary"></p>
       <div id="daily-plan"></div>
       <button onclick="startToday()">Start Today</button>
-      <button onclick="resetPlan()">Change Months / Reset</button>
+      <button onclick="resetPlan()" style="background:#95a5a6;">Reset</button>
     </div>
 
-    <div id="daily-view" style="display: none;">
-      <h2>Today's Preparation (Day <span id="current-day"></span>)</h2>
+    <div id="daily-view" style="display:none;">
+      <h2>Today's Study (Day <span id="current-day"></span>)</h2>
       <p id="today-topic"></p>
-      <div id="today-content"></div>
-      <button onclick="startQuiz()">Start Quiz</button>
+      <div id="today-content" style="white-space: pre-wrap;"></div>
+      <button onclick="startQuiz()">Start Evening Quiz (after 6 PM)</button>
     </div>
-    <div id="progress-screen" style="display: none;">
-  <h2>Progress Tracking</h2>
-  <div id="quiz-progress"></div>  <!-- Chart or list of scores -->
-</div>
-    <div id="quiz-screen" style="display: none;">
-      <h2>Adaptive Quiz for Today's Topic</h2>
+
+    <div id="quiz-screen" style="display:none;">
+      <h2>Adaptive Quiz - Today's Topic</h2>
       <div id="quiz-questions"></div>
-      <button onclick="submitQuiz()">Submit Quiz</button>
+      <button onclick="submitQuiz()">Submit & See Score</button>
       <p id="quiz-score"></p>
-      <button onclick="repeatWrongQuestions()" style="display:none;">Repeat Wrong Questions</button>
+      <button id="repeat-wrong" onclick="repeatWrongQuestions()" style="display:none;">Repeat Wrong Questions</button>
       <button onclick="finishDay()">Finish Day</button>
+    </div>
+
+    <div id="progress-screen" style="display:none;">
+      <h2>Your Progress</h2>
+      <div id="score-history"></div>
     </div>
   </div>
 
