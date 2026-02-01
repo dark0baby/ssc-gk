@@ -133,6 +133,8 @@ function generatePlan() {
   // Toggle screens
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'block';
+  // Save if logged in
+saveUserData(months, dailyTopics);
 }
 
 function resetPlan() {
