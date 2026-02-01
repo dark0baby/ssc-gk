@@ -43,27 +43,24 @@
       <button onclick="resetPlan()">Change Months / Reset</button>
     </div>
   </div>
-<!-- Firebase SDK - place this in <head> or before </body> -->
+<!-- Firebase SDK -->
 <script type="module">
-  // Latest stable version as of early 2026
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    onAuthStateChanged, 
-    signOut 
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
   } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  
-  import { 
-    getFirestore, 
-    doc, 
-    setDoc, 
-    getDoc 
+
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
   } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  // ────────────────────────────────────────────────
-  // Your Firebase project config (this is safe to expose for web apps)
   const firebaseConfig = {
     apiKey: "AIzaSyDQmKUc29kiogHRB1juJSdoW28499leCdQ",
     authDomain: "ssc-gk-planner.firebaseapp.com",
@@ -73,15 +70,24 @@
     appId: "1:72980353870:web:cf729a3d4ae50e1c26841f",
     measurementId: "G-RBFMSPE5X1"
   };
-  // ────────────────────────────────────────────────
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Make auth & db available to your normal script.js
-  window.auth = auth;
-  window.db = db;
+  // ────────────────────────────────────────────────
+  // Critical: expose ALL needed functions & objects globally
+  // so plain <script src="script.js"> can use them
+  // ────────────────────────────────────────────────
+  window.auth                          = auth;
+  window.db                             = db;
+  window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+  window.signInWithEmailAndPassword     = signInWithEmailAndPassword;
+  window.onAuthStateChanged             = onAuthStateChanged;
+  window.signOut                        = signOut;
+  window.doc                            = doc;
+  window.setDoc                         = setDoc;
+  window.getDoc                         = getDoc;
 </script>
   <script src="script.js"></script>
 </body>
