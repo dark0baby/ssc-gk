@@ -1,21 +1,16 @@
-// ────────────────────────────────────────────────
-// Authentication functions
-// ────────────────────────────────────────────────
-
+// Auth functions
 async function signup() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const msg = document.getElementById('auth-message');
-
   if (!email || !password) {
     msg.textContent = "Please enter email and password";
     msg.style.color = "red";
     return;
   }
-
   try {
     await createUserWithEmailAndPassword(auth, email, password);
-    msg.textContent = "Account created! You are now logged in.";
+    msg.textContent = "Account created! Logging in...";
     msg.style.color = "green";
   } catch (error) {
     msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
@@ -27,7 +22,6 @@ async function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const msg = document.getElementById('auth-message');
-
   try {
     await signInWithEmailAndPassword(auth, email, password);
     msg.textContent = "Logged in successfully!";
@@ -45,29 +39,21 @@ function logout() {
 function continueAsGuest() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
-  document.getElementById('current-user').textContent = "Guest (local only)";
+  document.getElementById('current-user').textContent = "Guest (local save only)";
   document.getElementById('input-screen').style.display = 'block';
   loadLocalPlan();
 }
-
-// ────────────────────────────────────────────────
-// Show planner after auth / guest
-// ────────────────────────────────────────────────
 
 function showLoggedIn(email) {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
   document.getElementById('current-user').textContent = email || "Guest";
-  document.getElementById('input-screen').style.display = 'block';
+  document.getElementById('input-screen').style.display = 'block';  // ← This shows the months input
   loadUserData();
 }
 
-// ────────────────────────────────────────────────
-// Auth state listener – controls what is visible
-// ────────────────────────────────────────────────
-
+// Auth state listener
 onAuthStateChanged(auth, (user) => {
-  // Hide everything except auth screen initially
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'none';
 
@@ -79,94 +65,63 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ────────────────────────────────────────────────
-// Save & Load functions
-// ────────────────────────────────────────────────
-
+// Save / Load logic
 async function saveUserData(months, dailyTopics) {
   if (!auth.currentUser) {
-    // Guest mode - localStorage
     localStorage.setItem('prepMonths', months);
     localStorage.setItem('guestPlan', JSON.stringify(dailyTopics));
     return;
   }
-
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userRef, {
-      months,
-      plan: dailyTopics,
-      lastUpdated: new Date().toISOString()
-    }, { merge: true });
-    console.log("Saved to Firestore");
+    await setDoc(userRef, { months, plan: dailyTopics, lastUpdated: new Date().toISOString() }, { merge: true });
   } catch (err) {
-    console.error("Save error:", err);
+    console.error("Save failed:", err);
   }
 }
 
 async function loadUserData() {
   if (!auth.currentUser) return;
-
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
     const docSnap = await getDoc(userRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
       document.getElementById('months').value = data.months || "";
-
       if (data.plan && data.plan.length > 0) {
         let html = '';
         data.plan.forEach(item => {
-          html += `<div class="day-card">
-            <strong>${item.day}</strong><br>
-            Topics: ${item.topics.join(' + ')}
-          </div>`;
+          html += `<div class="day-card"><strong>${item.day}</strong><br>Topics: ${item.topics.join(' + ')}</div>`;
         });
         document.getElementById('daily-plan').innerHTML = html;
-
-        document.getElementById('summary').innerHTML = `
-          Loaded your saved plan (${data.months} months)<br>
-          Last updated: ${new Date(data.lastUpdated).toLocaleString()}
-        `;
-
-        document.getElementById('input-screen').style.display = 'none';
+        document.getElementById('summary').innerHTML = `Loaded saved plan (${data.months} months)`;
         document.getElementById('plan-screen').style.display = 'block';
+        document.getElementById('input-screen').style.display = 'none';
       }
     }
   } catch (err) {
-    console.error("Load error:", err);
+    console.error("Load failed:", err);
   }
 }
 
 function loadLocalPlan() {
-  const savedMonths = localStorage.getItem('prepMonths');
-  const savedPlan = localStorage.getItem('guestPlan');
-
-  if (savedMonths) {
-    document.getElementById('months').value = savedMonths;
-  }
-
-  if (savedPlan) {
-    const plan = JSON.parse(savedPlan);
+  const months = localStorage.getItem('prepMonths');
+  const planJson = localStorage.getItem('guestPlan');
+  if (months) document.getElementById('months').value = months;
+  if (planJson) {
+    const plan = JSON.parse(planJson);
     let html = '';
     plan.forEach(item => {
-      html += `<div class="day-card">
-        <strong>${item.day}</strong><br>
-        Topics: ${item.topics.join(' + ')}
-      </div>`;
+      html += `<div class="day-card"><strong>${item.day}</strong><br>Topics: ${item.topics.join(' + ')}</div>`;
     });
     document.getElementById('daily-plan').innerHTML = html;
-
-    document.getElementById('summary').innerHTML = `Loaded previous guest plan (${savedMonths || '?'} months)`;
-    document.getElementById('input-screen').style.display = 'none';
+    document.getElementById('summary').innerHTML = `Loaded previous guest plan (${months || '?'} months)`;
     document.getElementById('plan-screen').style.display = 'block';
+    document.getElementById('input-screen').style.display = 'none';
   }
 }
 
-// ────────────────────────────────────────────────
 // Plan generation
-// ────────────────────────────────────────────────
-
 const topics = [
   "Current Affairs (National/International, Schemes, Awards)",
   "History (Ancient, Medieval, Modern)",
@@ -182,9 +137,7 @@ const topics = [
 const sscFocusTopics = topics.slice(0, 7);
 
 function generatePlan() {
-  const monthsInput = document.getElementById('months').value;
-  const months = parseInt(monthsInput);
-
+  const months = parseInt(document.getElementById('months').value);
   if (!months || months < 1) {
     alert("Please enter a valid number of months (1 or more).");
     return;
@@ -198,9 +151,9 @@ function generatePlan() {
   let dailyTopics = [];
 
   for (let day = 1; day <= prepDays; day++) {
-    const topic1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
-    const topic2 = (day % 2 === 0) ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
-    dailyTopics.push({ day: `Day ${day} (Prep)`, topics: topic2 ? [topic1, topic2] : [topic1] });
+    const t1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
+    const t2 = (day % 2 === 0) ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
+    dailyTopics.push({ day: `Day ${day} (Prep)`, topics: t2 ? [t1, t2] : [t1] });
     topicIndex++;
   }
 
@@ -217,17 +170,13 @@ function generatePlan() {
 
   let html = '';
   dailyTopics.forEach(item => {
-    html += `<div class="day-card">
-      <strong>${item.day}</strong><br>
-      Topics: ${item.topics.join(' + ')}
-    </div>`;
+    html += `<div class="day-card"><strong>${item.day}</strong><br>Topics: ${item.topics.join(' + ')}</div>`;
   });
   document.getElementById('daily-plan').innerHTML = html;
 
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'block';
 
-  // Save plan
   saveUserData(months, dailyTopics);
 }
 
