@@ -16,9 +16,10 @@ async function signup() {
   const msg = document.getElementById('auth-message');
 
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
     msg.textContent = "Account created & logged in!";
     msg.style.color = "green";
+    localStorage.clear(); // Clear any guest data
     setTimeout(goToPlanner, 800);
   } catch (error) {
     msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
@@ -35,6 +36,7 @@ async function login() {
     await signInWithEmailAndPassword(auth, email, password);
     msg.textContent = "Logged in successfully!";
     msg.style.color = "green";
+    localStorage.clear(); // Prevent guest data from leaking into real account
     setTimeout(goToPlanner, 800);
   } catch (error) {
     msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
@@ -56,15 +58,22 @@ function goToPlanner() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
   document.getElementById('input-screen').style.display = 'block';
-  loadUserData();
+  // Do NOT call loadUserData() here - wait for auth listener
 }
 
-// ───── AUTH STATE LISTENER ─────
-onAuthStateChanged(auth, (user) => {
+// ───── AUTH STATE LISTENER (THIS IS THE KEY) ─────
+onAuthStateChanged(auth, async (user) => {
+  console.log("Auth state:", user ? "Logged in as " + user.email : "Logged out");
+
   if (user) {
+    // Real user → load from Firestore
     document.getElementById('current-user').textContent = user.email;
-    goToPlanner();
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('user-info').style.display = 'block';
+    document.getElementById('input-screen').style.display = 'block';
+    await loadAllUserData(); // Load plan, startDate, etc.
   } else {
+    // No user → show login, clear sensitive UI
     document.getElementById('auth-screen').style.display = 'block';
     document.getElementById('user-info').style.display = 'none';
     document.getElementById('input-screen').style.display = 'none';
@@ -73,6 +82,23 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('quiz-screen').style.display = 'none';
   }
 });
+
+// ───── LOAD ALL USER DATA AFTER AUTH CONFIRMED ─────
+async function loadAllUserData() {
+  const plan = await loadUserData('plan');
+  const months = await loadUserData('months');
+  const startDate = await loadUserData('startDate');
+
+  if (plan && months) {
+    displayPlan(plan, months);
+    document.getElementById('input-screen').style.display = 'none';
+    document.getElementById('plan-screen').style.display = 'block';
+  }
+
+  if (startDate) {
+    showDailyView();
+  }
+}
 
 // ───── SAVE / LOAD ─────
 async function saveUserData(key, value) {
@@ -83,6 +109,7 @@ async function saveUserData(key, value) {
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
     await setDoc(userRef, { [key]: value }, { merge: true });
+    console.log(`Saved ${key}`);
   } catch (e) {
     console.error("Save failed:", e);
   }
@@ -95,15 +122,36 @@ async function loadUserData(key) {
   }
   try {
     const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
-    if (snap.exists()) {
+    if (snap.exists() && snap.data()[key] !== undefined) {
       return snap.data()[key];
     }
   } catch (e) {
-    console.error("Load failed:", e);
+    console.error("Firestore load failed for " + key + ":", e);
   }
   return null;
 }
 
+// Guest fallback
+function loadLocalPlan() {
+  const months = localStorage.getItem('prepMonths');
+  const plan = localStorage.getItem('guestPlan');
+  if (months) document.getElementById('months').value = months;
+  if (plan) displayPlan(JSON.parse(plan), months);
+}
+
+function displayPlan(dailyTopics, months) {
+  let html = '';
+  dailyTopics.forEach(item => {
+    html += `<div class="day-card">
+      <strong>${item.day}</strong><br>
+      Topics: ${item.topics.join(' + ')}
+    </div>`;
+  });
+  document.getElementById('daily-plan').innerHTML = html;
+  document.getElementById('summary').innerHTML = `Loaded your saved plan (${months} months)`;
+  document.getElementById('input-screen').style.display = 'none';
+  document.getElementById('plan-screen').style.display = 'block';
+}
 // ───── PLAN GENERATION ─────
 function generatePlan() {
   const months = parseInt(document.getElementById('months').value);
