@@ -47,39 +47,48 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-    import {
-      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-      onAuthStateChanged, signOut
-    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDQmKUc29kiogHRB1juJSdoW28499leCdQ",
-      authDomain: "ssc-gk-planner.firebaseapp.com",
-      projectId: "ssc-gk-planner",
-      storageBucket: "ssc-gk-planner.firebasestorage.app",
-      messagingSenderId: "72980353870",
-      appId: "1:72980353870:web:cf729a3d4ae50e1c26841f",
-      measurementId: "G-RBFMSPE5X1"
-    };
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQmKUc29kiogHRB1juJSdoW28499leCdQ",
+    authDomain: "ssc-gk-planner.firebaseapp.com",
+    projectId: "ssc-gk-planner",
+    storageBucket: "ssc-gk-planner.firebasestorage.app",
+    messagingSenderId: "72980353870",
+    appId: "1:72980353870:web:cf729a3d4ae50e1c26841f",
+    measurementId: "G-RBFMSPE5X1"
+  };
 
-    window.auth = auth;
-    window.db = db;
-    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-    window.onAuthStateChanged = onAuthStateChanged;
-    window.signOut = signOut;
-    window.doc = doc;
-    window.setDoc = setDoc;
-    window.getDoc = getDoc;
-  </script>
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Must expose EVERY function and object you use in script.js
+  window.auth                          = auth;
+  window.db                             = db;
+  window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+  window.signInWithEmailAndPassword     = signInWithEmailAndPassword;
+  window.onAuthStateChanged             = onAuthStateChanged;
+  window.signOut                        = signOut;
+  window.doc                            = doc;
+  window.setDoc                         = setDoc;
+  window.getDoc                         = getDoc;
+</script>
 
   <script src="script.js"></script>
 </body>
