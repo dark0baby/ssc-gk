@@ -1,8 +1,20 @@
+// ───── CONSTANTS ─────
+const sscFocusTopics = [
+  "Current Affairs (National/International, Schemes, Awards)",
+  "History (Ancient, Medieval, Modern)",
+  "Geography (Physical, India & World)",
+  "Polity & Constitution",
+  "Economy (Basics, Budget, RBI)",
+  "General Science (Biology, Physics, Chemistry)",
+  "Static GK (Days, Organizations, Culture)"
+];
+
 // ───── AUTH FUNCTIONS ─────
 async function signup() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const msg = document.getElementById('auth-message');
+
   try {
     await createUserWithEmailAndPassword(auth, email, password);
     msg.textContent = "Account created & logged in!";
@@ -18,6 +30,7 @@ async function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const msg = document.getElementById('auth-message');
+
   try {
     await signInWithEmailAndPassword(auth, email, password);
     msg.textContent = "Logged in successfully!";
@@ -38,7 +51,7 @@ function logout() {
   signOut(auth);
 }
 
-// ───── MAIN FUNCTION THAT SHOWS THE PLANNER ─────
+// ───── MAIN PLANNER ENTRY ─────
 function goToPlanner() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
@@ -70,7 +83,6 @@ async function saveUserData(key, value) {
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
     await setDoc(userRef, { [key]: value }, { merge: true });
-    console.log(`Saved ${key} to Firestore`);
   } catch (e) {
     console.error("Save failed:", e);
   }
@@ -92,40 +104,8 @@ async function loadUserData(key) {
   return null;
 }
 
-function loadLocalPlan() {
-  const months = localStorage.getItem('prepMonths');
-  const plan = localStorage.getItem('guestPlan');
-  if (months) document.getElementById('months').value = months;
-  if (plan) displayPlan(JSON.parse(plan), months);
-}
-
-function displayPlan(dailyTopics, months) {
-  let html = '';
-  dailyTopics.forEach(item => {
-    html += `<div class="day-card">
-      <strong>${item.day}</strong><br>
-      Topics: ${item.topics.join(' + ')}
-    </div>`;
-  });
-  document.getElementById('daily-plan').innerHTML = html;
-  document.getElementById('summary').innerHTML = `Loaded your saved plan (${months} months)`;
-  document.getElementById('input-screen').style.display = 'none';
-  document.getElementById('plan-screen').style.display = 'block';
-}
-
-// ───── CONSTANTS ─────
-const sscFocusTopics = [
-  "Current Affairs (National/International, Schemes, Awards)",
-  "History (Ancient, Medieval, Modern)",
-  "Geography (Physical, India & World)",
-  "Polity & Constitution",
-  "Economy (Basics, Budget, RBI)",
-  "General Science (Biology, Physics, Chemistry)",
-  "Static GK (Days, Organizations, Culture)"
-];
-
 // ───── PLAN GENERATION ─────
-async function generatePlan() {
+function generatePlan() {
   const months = parseInt(document.getElementById('months').value);
   if (!months || months < 1) {
     alert("Enter a valid number of months (1 or more)");
@@ -139,7 +119,6 @@ async function generatePlan() {
   let topicIndex = 0;
   let dailyTopics = [];
 
-  // Prep phase - interleave topics
   for (let d = 1; d <= prepDays; d++) {
     const t1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
     const t2 = d % 2 === 0 ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
@@ -147,7 +126,6 @@ async function generatePlan() {
     topicIndex++;
   }
 
-  // Revision phase
   for (let d = 1; d <= revisionDays; d++) {
     dailyTopics.push({ day: `Day ${prepDays + d} (Revision)`, topics: [sscFocusTopics[d % sscFocusTopics.length]] });
   }
@@ -170,7 +148,6 @@ async function generatePlan() {
   document.getElementById('input-screen').style.display = 'none';
   document.getElementById('plan-screen').style.display = 'block';
 
-  // Save
   saveUserData('plan', dailyTopics);
   saveUserData('months', months);
 }
@@ -179,7 +156,7 @@ async function generatePlan() {
 async function startToday() {
   const today = new Date().toISOString().split('T')[0];
   saveUserData('startDate', today);
-  alert("Preparation started from today! Check daily at 6AM.");
+  alert("Preparation started from today! Check daily at 6AM IST.");
   showDailyView();
 }
 
@@ -195,8 +172,8 @@ async function showDailyView() {
   }
 
   const startDate = new Date(startDateStr);
-  const today = new Date();
-  const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  const now = new Date();
+  const currentDay = Math.floor((now - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
   const plan = await loadUserData('plan');
   if (!plan || currentDay > plan.length) {
@@ -208,7 +185,7 @@ async function showDailyView() {
   document.getElementById('current-day').innerText = currentDay;
   document.getElementById('today-topic').innerHTML = `<strong>Today's Topic(s):</strong> ${todayItem.topics.join(' + ')}`;
 
-  // Generate full content via Grok API
+  // Generate full content via Grok API (proxy)
   let contentHtml = '';
   for (const topic of todayItem.topics) {
     const content = await callGrokAPI(`Generate full detailed chapter on "${topic}" for SSC CGL General Awareness from Lucent GK and NCERT books. Include all key facts, examples, diagrams descriptions, PYQ trends, and important points. Full content, no summaries - 800-1500 words.`);
@@ -226,13 +203,13 @@ async function startQuiz() {
   const progress = await loadUserData('quizProgress') || {};
   const wrongQ = progress[todayTopic] || [];
 
-  // Generate fresh PYQs if needed
+  // Generate fresh questions via API
   const prompt = `Generate 20 SSC CGL Tier-1 GA questions on "${todayTopic}" (2016-2025 style). Include 4 options, correct answer, short explanation, difficulty (Easy/Medium/Hard). Format as JSON array of objects: {q, options, a, explanation, difficulty, attempts:0, correct:0}.`;
   const jsonStr = await callGrokAPI(prompt);
   let newQuestions = JSON.parse(jsonStr);
   newQuestions.forEach(q => { q.attempts = 0; q.correct = 0; });
 
-  // Mix new + wrong
+  // Mix 60% new + 40% wrong
   const quizQ = [...newQuestions.slice(0, 12), ...wrongQ.slice(0, 8)];
 
   let html = '';
@@ -266,7 +243,7 @@ async function submitQuiz() {
 
   document.getElementById('quiz-score').innerHTML = `Score: ${score} / ${window.currentQuiz.length}`;
 
-  // Keep wrong if <80%
+  // Update wrong questions (keep if <80%)
   const updatedWrong = window.currentQuiz.filter(q => (q.correct / q.attempts) < 0.8);
   progress[window.currentTopic] = updatedWrong;
   saveUserData('quizProgress', progress);
@@ -279,14 +256,14 @@ async function submitQuiz() {
 
   document.getElementById('repeat-wrong').style.display = updatedWrong.length > 0 ? 'block' : 'none';
 
-  // Adaptive next day
+  // Adaptive next day difficulty
   const scorePct = (score / window.currentQuiz.length) * 100;
   const nextDifficulty = scorePct < 60 ? 'Easy' : scorePct < 80 ? 'Medium' : 'Hard';
   saveUserData('nextDifficulty', nextDifficulty);
 }
 
 function repeatWrongQuestions() {
-  startQuiz(); // reload
+  startQuiz();
 }
 
 function finishDay() {
@@ -294,15 +271,12 @@ function finishDay() {
   alert("Day complete! See you tomorrow after 6AM.");
 }
 
-// ───── GROK API CALL ─────
+// ───── GROK API CALL (via proxy) ─────
 async function callGrokAPI(prompt) {
   try {
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    const response = await fetch('/api/grok-proxy', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer xai-O7WFcl8uGp83FxJvz1sGDUoaVFJNPT2O1AkyQQ8TDkAXro8yYpH8sRzMCOa2Jq2ENS6pOBqP7lAWVNdj'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages: [{ role: "user", content: prompt }],
         model: "grok-4-latest",
@@ -310,68 +284,15 @@ async function callGrokAPI(prompt) {
         stream: false
       })
     });
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+    if (!response.ok) throw new Error(`Proxy error: ${response.status}`);
+
     const data = await response.json();
-    return data.choices[0].message.content;
+    return data.choices[0].message.content.trim();
   } catch (e) {
     console.error("Grok API failed:", e);
     return "Error: Could not generate content. Try again later.";
   }
-}
-
-// ───── PLAN GENERATION (adaptive) ─────
-async function generatePlan() {
-  const months = parseInt(document.getElementById('months').value);
-  if (!months || months < 1) {
-    alert("Enter a valid number of months (1 or more)");
-    return;
-  }
-
-  const totalDays = months * 30;
-  const prepDays = Math.floor(totalDays * 0.8);
-  const revisionDays = totalDays - prepDays;
-
-  let topicIndex = 0;
-  let dailyTopics = [];
-
-  for (let d = 1; d <= prepDays; d++) {
-    const t1 = sscFocusTopics[topicIndex % sscFocusTopics.length];
-    const t2 = d % 2 === 0 ? sscFocusTopics[(topicIndex + 1) % sscFocusTopics.length] : null;
-    dailyTopics.push({ day: `Day ${d} (Prep)`, topics: t2 ? [t1, t2] : [t1] });
-    topicIndex++;
-  }
-
-  for (let d = 1; d <= revisionDays; d++) {
-    dailyTopics.push({ day: `Day ${prepDays + d} (Revision)`, topics: [sscFocusTopics[d % sscFocusTopics.length]] });
-  }
-
-  let html = '';
-  dailyTopics.forEach(item => {
-    html += `<div class="day-card">
-      <strong>${item.day}</strong><br>
-      Topics: ${item.topics.join(' + ')}
-    </div>`;
-  });
-
-  document.getElementById('daily-plan').innerHTML = html;
-  document.getElementById('summary').innerHTML = `
-    <strong>${months} months (~${totalDays} days)</strong><br>
-    Preparation: ${prepDays} days • Revision: ${revisionDays} days<br>
-    Daily: 1–2 topics
-  `;
-
-  document.getElementById('input-screen').style.display = 'none';
-  document.getElementById('plan-screen').style.display = 'block';
-
-  saveUserData('plan', dailyTopics);
-  saveUserData('months', months);
-}
-
-function resetPlan() {
-  localStorage.clear();
-  document.getElementById('months').value = '';
-  document.getElementById('input-screen').style.display = 'block';
-  document.getElementById('plan-screen').style.display = 'none';
 }
 
 // ───── LOAD ON PAGE ─────
@@ -382,9 +303,7 @@ window.onload = async () => {
     if (now.getHours() >= 6) {
       showDailyView();
     } else {
-      alert("New day starts at 6AM. Come back then.");
+      alert("New day starts at 6AM IST. Come back then.");
     }
-  } else {
-    // show input or plan
   }
 };
