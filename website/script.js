@@ -1,5 +1,5 @@
 // ───── CONSTANTS ─────
-const GROK_PROXY_URL = '/api/grok-proxy'; // Your Vercel proxy path (change if custom domain)
+const GROK_PROXY_URL = '/api/grok-proxy'; // Change to your Vercel proxy if different
 
 // ───── AUTH FUNCTIONS ─────
 async function signup() {
@@ -11,7 +11,7 @@ async function signup() {
     await createUserWithEmailAndPassword(auth, email, password);
     msg.textContent = "Account created & logged in!";
     msg.style.color = "green";
-    localStorage.clear(); // Clear guest junk
+    localStorage.clear(); // Clear guest data
     setTimeout(goToPlanner, 800);
   } catch (error) {
     msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
@@ -28,7 +28,7 @@ async function login() {
     await signInWithEmailAndPassword(auth, email, password);
     msg.textContent = "Logged in successfully!";
     msg.style.color = "green";
-    localStorage.clear(); // Prevent guest data leak
+    localStorage.clear();
     setTimeout(goToPlanner, 800);
   } catch (error) {
     msg.textContent = error.message.replace("Firebase: ", "").replace(/\(auth\/.*?\)/g, "").trim();
@@ -46,10 +46,30 @@ function logout() {
 }
 
 // ───── MAIN PLANNER ENTRY ─────
-function goToPlanner() {
+async function goToPlanner() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('user-info').style.display = 'block';
-  loadAllUserData(); // Load everything after auth confirmed
+
+  // Load data first
+  const months = await loadUserData('months');
+  const plan = await loadUserData('plan');
+  const startDate = await loadUserData('startDate');
+
+  if (plan && months && startDate) {
+    // Has everything → go to daily view
+    document.getElementById('input-screen').style.display = 'none';
+    document.getElementById('plan-screen').style.display = 'none';
+    showDailyView();
+  } else if (plan && months) {
+    // Has plan but no start date → show plan screen to start
+    displayPlan(plan, months);
+    document.getElementById('input-screen').style.display = 'none';
+    document.getElementById('plan-screen').style.display = 'block';
+  } else {
+    // No plan → show input to generate
+    document.getElementById('input-screen').style.display = 'block';
+    document.getElementById('plan-screen').style.display = 'none';
+  }
 }
 
 // ───── AUTH LISTENER ─────
@@ -57,10 +77,7 @@ onAuthStateChanged(auth, async (user) => {
   console.log("Auth changed:", user ? user.email : "Logged out");
 
   if (user) {
-    document.getElementById('current-user').textContent = user.email;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('user-info').style.display = 'block';
-    await loadAllUserData();
+    await goToPlanner(); // Load and show correct screen
   } else {
     document.getElementById('auth-screen').style.display = 'block';
     document.getElementById('user-info').style.display = 'none';
@@ -70,25 +87,6 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('quiz-screen').style.display = 'none';
   }
 });
-
-// ───── LOAD ALL DATA AFTER LOGIN ─────
-async function loadAllUserData() {
-  const months = await loadUserData('months');
-  const plan = await loadUserData('plan');
-  const startDate = await loadUserData('startDate');
-
-  if (plan && months) {
-    displayPlan(plan, months);
-    document.getElementById('input-screen').style.display = 'none';
-    document.getElementById('plan-screen').style.display = 'block';
-  } else {
-    document.getElementById('input-screen').style.display = 'block';
-  }
-
-  if (startDate) {
-    showDailyView();
-  }
-}
 
 // ───── SAVE / LOAD ─────
 async function saveUserData(key, value) {
@@ -121,6 +119,7 @@ async function loadUserData(key) {
   return null;
 }
 
+// ───── DISPLAY SAVED PLAN ─────
 function displayPlan(dailyTopics, months) {
   let html = '';
   dailyTopics.forEach(item => {
@@ -135,10 +134,13 @@ function displayPlan(dailyTopics, months) {
   document.getElementById('plan-screen').style.display = 'block';
 }
 
-// ───── GENERATE INITIAL PLAN (once) ─────
+// ───── GENERATE PLAN ─────
 function generatePlan() {
   const months = parseInt(document.getElementById('months').value);
-  if (!months || months < 1) return alert("Enter months (1+).");
+  if (!months || months < 1) {
+    alert("Enter valid months (1+).");
+    return;
+  }
 
   const totalDays = months * 30;
   const prepDays = Math.floor(totalDays * 0.8);
@@ -187,7 +189,7 @@ async function startToday() {
   showDailyView();
 }
 
-// ───── DAILY VIEW (dynamic via API) ─────
+// ───── DAILY VIEW (dynamic API) ─────
 async function showDailyView() {
   document.getElementById('plan-screen').style.display = 'none';
   document.getElementById('daily-view').style.display = 'block';
@@ -199,10 +201,8 @@ async function showDailyView() {
   const now = new Date();
   const currentDay = Math.floor((now - startDate) / 86400000) + 1;
 
-  // Dynamic daily task from API
-  const prompt = `For SSC CGL GA Day ${currentDay}, generate today's focused study topic/chapter. 
-  Title + full detailed content (800-1500 words) from Lucent GK/NCERT. Include facts, examples, PYQ trends. 
-  Return JSON: {title: "...", content: "..."}`;
+  // Dynamic full chapter from API
+  const prompt = `For SSC CGL GA Day ${currentDay}, generate today's full detailed study chapter. Title + complete content (800-1500 words) from Lucent GK/NCERT. Include all facts, examples, PYQ trends. JSON: {title: "...", content: "..."}`;
 
   const jsonStr = await callGrokAPI(prompt);
   const todayTask = JSON.parse(jsonStr);
@@ -211,7 +211,6 @@ async function showDailyView() {
   document.getElementById('today-topic').innerHTML = `<strong>Day ${currentDay}:</strong> ${todayTask.title}`;
   document.getElementById('today-content').innerHTML = todayTask.content.replace(/\n/g, '<br>');
 
-  // Save today's task
   saveUserData(`day_${currentDay}`, todayTask);
 }
 
@@ -258,7 +257,7 @@ async function submitQuiz() {
   scores[today] = score;
   saveUserData('quizScores', scores);
 
-  alert("Quiz submitted! Check progress tomorrow.");
+  alert("Quiz done! Progress saved. See you tomorrow.");
   finishDay();
 }
 
@@ -267,7 +266,7 @@ function finishDay() {
   document.getElementById('daily-view').style.display = 'block';
 }
 
-// ───── GROK API CALL ─────
+// ───── API CALL ─────
 async function callGrokAPI(prompt) {
   try {
     const response = await fetch(GROK_PROXY_URL, {
